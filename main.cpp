@@ -28,6 +28,5 @@ int main() {
 	result = _mm_shuffle_epi8(result, bswap_mask);
 	print_bytes((uint8_t*)&result, 16);
 	
-	//to do
 
 }
