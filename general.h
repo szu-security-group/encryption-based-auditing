@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 
+#ifndef GENERAL_H
+#define GENERAL_H
 
 constexpr auto BLOCK_SIZE = 8;
 constexpr auto AES_BLOCK_SIZE = 16;
@@ -11,8 +13,17 @@ constexpr auto KEY_SIZE = 16;
 // if 1% outsourced data is damaged.
 constexpr auto CHALLENGE_NUM = 460;
 // constexpr auto CHALLENGE_NUM = 688;
+
 constexpr auto file_path = "E:\\home\\data\\3680.txt";
 typedef unsigned long long block;
+
+extern uint8_t key_A[KEY_SIZE];
+extern uint8_t key_B[KEY_SIZE];
+extern uint8_t s_a[KEY_SIZE];
+extern uint8_t s_b[KEY_SIZE];
+extern uint8_t k_d_a[KEY_SIZE];
+extern uint8_t k_d_b[KEY_SIZE];
+
 
 void test_salsa20_stream();
 
@@ -20,7 +31,11 @@ void print_buffer(const uint8_t* pointer);
 
 void print_box(const uint8_t* box);
 
+void test_AES_CTR();
+
 void print_bytes(const uint8_t* pointer, int length);
+
+
 
 void AES_CTR_encrypt(const uint8_t* in,
     unsigned char* out,
@@ -31,3 +46,5 @@ void AES_CTR_encrypt(const uint8_t* in,
     int number_of_rounds);
 
 std::string binaryToHex(std::string binaryStr);
+
+#endif
