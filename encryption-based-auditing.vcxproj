@@ -137,6 +137,7 @@
     <ClInclude Include="Client.h" />
     <ClInclude Include="general.h" />
     <ClInclude Include="gfmul.h" />
+    <ClInclude Include="Server.h" />
     <ClInclude Include="timer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -144,6 +145,7 @@
     <ClCompile Include="general.cpp" />
     <ClCompile Include="gfmul.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Server.cpp" />
     <ClCompile Include="timer.cpp" />
   </ItemGroup>
   <ItemGroup>

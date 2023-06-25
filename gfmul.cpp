@@ -196,3 +196,22 @@ void test_gfmul()
 	// test case 3 end
 	*/
 }
+
+void test_Inverse()
+{
+	__m128i a = { 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x1 };
+	__m128i a_;
+	getInverseEle(a,a_);
+	__m128i bswap_mask = _mm_set_epi8(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+	__m128i num1 = { 'a','b','a','b', 'a','b','a','b' ,'a','b','a','b' ,'a','b','a','b' };
+	num1 = _mm_shuffle_epi8(num1, bswap_mask);
+	a = _mm_shuffle_epi8(a, bswap_mask);
+	a_ = _mm_shuffle_epi8(a_, bswap_mask);
+	__m128i result;
+	print_bytes((uint8_t*)&num1, 16);
+	gfmul_(num1, a, result);
+	print_bytes((uint8_t*)&result, 16);
+	gfmul_(result, a_, result);
+	result = _mm_shuffle_epi8(result, bswap_mask);
+	print_bytes((uint8_t*)&result, 16);
+}

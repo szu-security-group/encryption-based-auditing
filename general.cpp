@@ -18,9 +18,29 @@ uint8_t key_A[KEY_SIZE]{};
 uint8_t key_B[KEY_SIZE]{};
 uint8_t s_a[KEY_SIZE]{};
 uint8_t s_b[KEY_SIZE]{};
-uint8_t k_d_a[KEY_SIZE]{};
-uint8_t k_d_b[KEY_SIZE]{};
+uint8_t key_digest_a[KEY_SIZE]{};
+uint8_t key_digest_b[KEY_SIZE]{};
+uint8_t CTR128_IV[8] = { 0xC0,0x54,0x3B,0x59,0xDA,0x48,0xD9,0x0B };
+uint8_t CTR128_NONCE[4] = { 0x00,0x6C,0xB6,0xDB };
 
+
+
+void test_salsa20_stream()
+{
+    using namespace CryptoPP;
+    Salsa20::Encryption enc;
+    uint8_t key[16] = { 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+    uint8_t iv[8] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+    enc.SetKeyWithIV(key, 16, iv, 8);
+    uint8_t plaintext[64] = {};
+    uint8_t ciphertext[64] = {};
+    enc.ProcessData(ciphertext, plaintext, 64);
+    uint8_t plaintext1[64] = {};
+    uint8_t ciphertext1[64] = {};
+    enc.ProcessData(ciphertext1, plaintext1, 64);
+    print_bytes(ciphertext, 64);
+    print_bytes(ciphertext1, 64);
+}
 
 void print_buffer(const uint8_t* pointer)
 {
@@ -58,22 +78,6 @@ block multiply_sum(block* a, block* b, int length) {
     return sum;
 }
 
-void test_salsa20_stream()
-{
-    using namespace CryptoPP;
-    Salsa20::Encryption enc;
-    uint8_t key[16] = { 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-    uint8_t iv[8] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-    enc.SetKeyWithIV(key, 16, iv, 8);
-    uint8_t plaintext[64] = {};
-    uint8_t ciphertext[64] = {};
-    enc.ProcessData(ciphertext, plaintext, 64);
-    uint8_t plaintext1[64] = {};
-    uint8_t ciphertext1[64] = {};
-    enc.ProcessData(ciphertext1, plaintext1, 64);
-    print_bytes(ciphertext, 64);
-    print_bytes(ciphertext1, 64);
-}
 
 
 std::string binaryToHex(std::string binaryStr)
@@ -87,6 +91,7 @@ std::string binaryToHex(std::string binaryStr)
     }
     return ret;
 }
+
 
 inline __m128i AES_128_ASSIST(__m128i temp1, __m128i temp2)
 {
@@ -142,11 +147,6 @@ void AES_128_Key_Expansion(const uint8_t* userkey,
     Key_Schedule[10] = temp1;
 }
 
-typedef struct KEY_SCHEDULE {
-    uint8_t KEY[16 * 15];
-    unsigned int nr;
-}AES_KEY;
-
 int AES_set_encrypt_key(const uint8_t* userKey,
     const int bits,
     AES_KEY* key) {
@@ -197,8 +197,10 @@ void test_AES_CTR() {
         0x18,0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F };
     const uint8_t AES128_TEST_KEY[32] = { 0x7E,0x24,0x06,0x78,0x17,0xFA,0xE0,0xD7,
                                         0x43,0xD6,0xCE,0x1F,0x32,0x53,0x91,0x63 };
-    uint8_t CTR128_IV[8] = { 0xC0,0x54,0x3B,0x59,0xDA,0x48,0xD9,0x0B };
-    uint8_t CTR128_NONCE[4] = { 0x00,0x6C,0xB6,0xDB };
+    uint8_t CTR128_EXPECTED[] = { 0x51,0x04,0xA1,0x06,0x16,0x8A,0x72,0xD9,
+        0x79,0x0D,0x41,0xEE,0x8E,0xDA,0xD3,0x88,
+        0xEB,0x2E,0x1E,0xFC,0x46,0xDA,0x57,0xC8,
+        0xFC,0xE6,0x30,0xDF,0x91,0x41,0xBE,0x28 };
     int LENGTH = 64;
     uint8_t* PLAINTEXT = (uint8_t*)malloc(LENGTH);
     uint8_t* CIPHERTEXT = (uint8_t*)malloc(LENGTH);
@@ -222,6 +224,54 @@ void test_AES_CTR() {
     AES_set_encrypt_key(AES128_TEST_KEY, 128, &key);
     AES_CTR_encrypt(PLAINTEXT,CIPHERTEXT,CTR128_IV,CTR128_NONCE,LENGTH,key.KEY,key.nr);
     AES_CTR_encrypt(CIPHERTEXT, DECRYPTEDTEXT, CTR128_IV, CTR128_NONCE, LENGTH, key.KEY, key.nr);
+}
 
+std::string getCoeff(const uint8_t* key) {
+    uint8_t iv[CryptoPP::Salsa20::IV_LENGTH] = { 0x00 };
+    CryptoPP::Salsa20::Encryption salsaEncryption;
+    salsaEncryption.SetKeyWithIV(key, CryptoPP::Salsa20::DEFAULT_KEYLENGTH, iv);
+    std::string stringsource(CHALLENGE_NUM * sizeof(AES128_BLOCK_SIZE), 0x00);
+    std::string ciphertext;
+    CryptoPP::StringSource(stringsource, true,
+        new CryptoPP::StreamTransformationFilter(salsaEncryption,
+            new CryptoPP::StringSink(ciphertext)));
+    return ciphertext;
+}
+
+void save_file(const uint8_t* data, , std::size_t size)
+{
+}
+
+
+
+std::vector<uint32_t> getRandomIndex(const uint8_t* key,uint32_t file_length) {
+    uint8_t iv[CryptoPP::Salsa20::IV_LENGTH] = { 0x00 };
+    CryptoPP::Salsa20::Encryption salsaEncryption;
+    salsaEncryption.SetKeyWithIV(key, CryptoPP::Salsa20::DEFAULT_KEYLENGTH, iv);
+    std::string stringsource(CHALLENGE_NUM * sizeof(uint32_t), 0x00);
+    std::string ciphertext;
+    CryptoPP::StringSource(stringsource, true,
+        new CryptoPP::StreamTransformationFilter(salsaEncryption,
+            new CryptoPP::StringSink(ciphertext)));
+    std::vector<uint32_t> nums;
+    uint32_t* num = (uint32_t*)stringsource.c_str();
+    for (int i = 0; i < CHALLENGE_NUM; i++) {
+        nums.push_back(*num%file_length);
+        num++;
+    }
+    return nums;
+}
+
+void save_file(const uint8_t* data, std::size_t size, std::string file_name)
+{
+    std::ofstream outfile(file_name, std::ios::binary|std::ios::trunc);
+    if (outfile.is_open()) {
+        outfile.write(reinterpret_cast<const char*>(data), size);
+        outfile.close();
+        std::cout << "write successfully" << std::endl;
+    }
+    else {
+        std::cerr << "can't open file" << std::endl;
+    }
 }
 

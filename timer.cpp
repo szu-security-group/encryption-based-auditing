@@ -1,3 +1,5 @@
+
+
 #include "timer.h"
 #include<chrono>
 #include<iostream>
@@ -21,5 +23,6 @@ void timer::print_time_cost()
 {
 	std::cout << (this->time_cost.count()) * std::chrono::nanoseconds::period::num << "ns" << std::endl;
 }
+
 
 

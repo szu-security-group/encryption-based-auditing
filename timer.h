@@ -1,4 +1,6 @@
 #pragma once
+#ifndef TIMER_H
+#define TIMER_H
 #include<chrono>
 class timer
 {
@@ -11,4 +13,6 @@ public:
 	void compute_duration();
 	void print_time_cost();
 };
+
+#endif
 
