@@ -238,11 +238,6 @@ std::string getCoeff(const uint8_t* key) {
     return ciphertext;
 }
 
-void save_file(const uint8_t* data, , std::size_t size)
-{
-}
-
-
 
 std::vector<uint32_t> getRandomIndex(const uint8_t* key,uint32_t file_length) {
     uint8_t iv[CryptoPP::Salsa20::IV_LENGTH] = { 0x00 };
@@ -272,6 +267,44 @@ void save_file(const uint8_t* data, std::size_t size, std::string file_name)
     }
     else {
         std::cerr << "can't open file" << std::endl;
+    }
+}
+
+void save_key()
+{
+    std::ofstream outfile(key_path, std::ios::binary);
+    if (outfile.is_open()) {
+        outfile.write(reinterpret_cast<const char*>(key_A), AES128_BLOCK_SIZE);
+        outfile.write(reinterpret_cast<const char*>(key_B), AES128_BLOCK_SIZE);
+        outfile.write(reinterpret_cast<const char*>(s_a), AES128_BLOCK_SIZE);
+        outfile.write(reinterpret_cast<const char*>(s_b), AES128_BLOCK_SIZE);
+        outfile.write(reinterpret_cast<const char*>(key_digest_a), AES128_BLOCK_SIZE);
+        outfile.write(reinterpret_cast<const char*>(key_digest_b), AES128_BLOCK_SIZE);
+
+        outfile.close();
+        std::cout << "save key_file successfully" << std::endl;
+    }
+    else {
+        std::cerr << "can't open key_file" << std::endl;
+    }
+}
+
+void read_key()
+{
+    std::ifstream infile(key_path, std::ios::binary);
+    if (infile.is_open()) {
+        infile.read(reinterpret_cast<char*>(key_A), AES128_BLOCK_SIZE);
+        infile.read(reinterpret_cast<char*>(key_B), AES128_BLOCK_SIZE);
+        infile.read(reinterpret_cast<char*>(s_a), AES128_BLOCK_SIZE);
+        infile.read(reinterpret_cast<char*>(s_b), AES128_BLOCK_SIZE);
+        infile.read(reinterpret_cast<char*>(key_digest_a), AES128_BLOCK_SIZE);
+        infile.read(reinterpret_cast<char*>(key_digest_b), AES128_BLOCK_SIZE);
+
+        infile.close();
+        std::cout << "read key_file successfully" << std::endl;
+    }
+    else {
+        std::cerr << "can't open key_file" << std::endl;
     }
 }
 

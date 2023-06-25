@@ -23,14 +23,22 @@
 /// <param name="k_d_b">key to generate digest for ServerB</param>
 void Client::KeyGen()
 {
-	const unsigned int keySize = CryptoPP::AES::DEFAULT_KEYLENGTH;
-	CryptoPP::AutoSeededRandomPool rng;
-	rng.GenerateBlock(key_A, keySize);
-	rng.GenerateBlock(key_B, keySize);
-	rng.GenerateBlock(s_a, keySize);
-	rng.GenerateBlock(s_b, keySize);
-	rng.GenerateBlock(key_digest_a, keySize);
-	rng.GenerateBlock(key_digest_b, keySize);
+	std::ifstream infile(key_path);
+	if (!infile.good()) {
+		const unsigned int keySize = CryptoPP::AES::DEFAULT_KEYLENGTH;
+		CryptoPP::AutoSeededRandomPool rng;
+		rng.GenerateBlock(key_A, keySize);
+		rng.GenerateBlock(key_B, keySize);
+		rng.GenerateBlock(s_a, keySize);
+		rng.GenerateBlock(s_b, keySize);
+		rng.GenerateBlock(key_digest_a, keySize);
+		rng.GenerateBlock(key_digest_b, keySize);
+		std::ofstream outfile(key_path);
+		save_key();
+	}
+	else {
+		read_key();
+	}
 }
 
 
@@ -56,6 +64,8 @@ void Client::test_Decode_and_Encode(const uint8_t* cipher_key, const uint8_t* s_
 		unsigned long long t_length = file_str.length();
 		uint8_t* CIPHERTEXT = (uint8_t*)malloc(t_length);
 		encode((uint8_t*)file_str.c_str(), CIPHERTEXT, t_length, cipher_key,s_key);
+		
+		save_file(CIPHERTEXT, t_length, file_a);
 		uint8_t* DECIPHERTEXT = (uint8_t*)malloc(t_length);
 		__m128i e_s;
 		__m128i s = _mm_loadu_si128((__m128i*)s_key);

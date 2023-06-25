@@ -16,6 +16,7 @@ constexpr auto CHALLENGE_NUM = 460;
 // constexpr auto CHALLENGE_NUM = 688;
 
 constexpr auto file_path = "E:\\home\\data\\1.txt";
+constexpr auto key_path = "E:\\home\\data\\key.txt";
 constexpr auto file_a = "E:\\home\\data\\encrypt_a.enc";
 constexpr auto file_b = "E:\\home\\data\\encrypt_b.enc";
 typedef unsigned long long block;
@@ -62,5 +63,9 @@ std::string getCoeff(const uint8_t* key);
 std::vector<uint32_t> getRandomIndex(const uint8_t* key, uint32_t file_length);
 
 void save_file(const uint8_t* data,std::size_t size,std::string file_name);
+
+void save_key();
+
+void read_key();
 
 #endif
