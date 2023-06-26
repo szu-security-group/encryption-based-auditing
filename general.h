@@ -12,7 +12,8 @@ constexpr auto BUFFER_SIZE = 2048;
 constexpr auto KEY_SIZE = 16;
 // challenge length 460(688) leads to 99% (99.9%) a successful detection probability 
 // if 1% outsourced data is damaged.
-constexpr auto CHALLENGE_NUM = 460;
+constexpr auto CHALLENGE_NUM = 1;
+//constexpr auto CHALLENGE_NUM = 460;
 // constexpr auto CHALLENGE_NUM = 688;
 
 constexpr auto file_path = "E:\\home\\data\\1.txt";

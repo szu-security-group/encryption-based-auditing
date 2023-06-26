@@ -8,12 +8,16 @@
 int main() {
 	Client client("user");
 	client.KeyGen();
-	//client.test_Decode_and_Encode(s_a,key_A);
-	//chall chall_a;
-	//chall_a = client.challenge();
-	//Server serverA("serverA");
-	//alignas(16) uint8_t proofA[16];
-	//serverA.response(chall_a,file_a,proofA);
+	client.test_Decode_and_Encode();
+	chall new_chall;
+	new_chall = client.challenge();
+	Server serverA("serverA");
+	Server serverB("serverB");
+	alignas(16) uint8_t proofA[16];
+	alignas(16) uint8_t proofB[16];
+	serverA.response(new_chall, file_a, proofA);
+	serverB.response(new_chall, file_b, proofB);
+	client.Verify(new_chall,proofA,proofB);
 	return 0;
 	
 }

@@ -47,7 +47,7 @@ Client::Client(std::string name)
 	name.copy(this->name, name.length());
 }
 
-void Client::test_Decode_and_Encode(const uint8_t* cipher_key, const uint8_t* s_key)
+void Client::test_Decode_and_Encode()
 {
 	std::ifstream infile(file_path, std::ios::in | std::ios::binary);
 	try {
@@ -63,14 +63,15 @@ void Client::test_Decode_and_Encode(const uint8_t* cipher_key, const uint8_t* s_
 		std::string file_str = file_str_stream.str();
 		unsigned long long t_length = file_str.length();
 		uint8_t* CIPHERTEXT = (uint8_t*)malloc(t_length);
-		encode((uint8_t*)file_str.c_str(), CIPHERTEXT, t_length, cipher_key,s_key);
-		
+		encode((uint8_t*)file_str.c_str(), CIPHERTEXT, t_length, key_A,s_a);
 		save_file(CIPHERTEXT, t_length, file_a);
+		encode((uint8_t*)file_str.c_str(), CIPHERTEXT, t_length, key_B, s_b);
+		save_file(CIPHERTEXT, t_length, file_b);
 		uint8_t* DECIPHERTEXT = (uint8_t*)malloc(t_length);
 		__m128i e_s;
-		__m128i s = _mm_loadu_si128((__m128i*)s_key);
+		__m128i s = _mm_loadu_si128((__m128i*)s_a);
 		getInverseEle(s, e_s);
-		decode(CIPHERTEXT, DECIPHERTEXT, t_length,cipher_key, (uint8_t*)&e_s);
+		decode(CIPHERTEXT, DECIPHERTEXT, t_length,key_A, (uint8_t*)&e_s);
 	}
 	catch (std::ifstream::failure e)
 	{
@@ -165,20 +166,66 @@ void Client::decode(const uint8_t* in, uint8_t* out, unsigned long long length, 
 }
 
 
-bool Client::Verify(uint8_t* digestA, uint8_t* digestB)
+bool Client::Verify(chall t_chall, uint8_t* digestA, uint8_t* digestB)
 {
-	timer time1 = timer();
-	time1.set_start();
-	uint8_t tmp[BLOCK_SIZE]{};
-	uint64_t* p = (uint64_t*)tmp;
-	for (int i = 0; i < BLOCK_SIZE; i++)
-		tmp[i] = digestA[i] ^ digestB[i];
-	time1.set_end();
-	time1.compute_duration();
-	time1.print_time_cost();
-	if (*p == 0)
-		return true;
-	else
-		return false;
+
+	__m128i gamma_a = *(__m128i*)digestA;
+	__m128i gamma_b = *(__m128i*)digestB;
+
+	std::vector<uint32_t> indices{ 0 };
+	//indices = getRandomIndex(t_chall.index, max);
+	std::string str_coeff;
+	char buffer[AES128_BLOCK_SIZE];
+	str_coeff = getCoeff(t_chall.coeff);
+	__m128i* __128coeff = (__m128i*)str_coeff.c_str();
+	__m128i sum_a = _mm_set_epi32(0, 0, 0, 0);
+	__m128i sum_b = _mm_set_epi32(0, 0, 0, 0);
+
+	__m128i ctr_block = _mm_set_epi64x(0, 0), tmp1, tmp2, tmp3, tmp4, BSWAP_EPI64;
+	int i, j;
+	BSWAP_EPI64 = _mm_setr_epi8(7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
+	ctr_block = _mm_insert_epi64(ctr_block, *(long long*)CTR128_IV, 1);
+	ctr_block = _mm_insert_epi32(ctr_block, *(long*)CTR128_NONCE, 1);
+	ctr_block = _mm_srli_si128(ctr_block, 4);
+	ctr_block = _mm_shuffle_epi8(ctr_block, BSWAP_EPI64);
+
+	AES_KEY aes_key_a;
+	AES_set_encrypt_key(key_A, 128, &aes_key_a);
+	AES_KEY aes_key_b;
+	AES_set_encrypt_key(key_B, 128, &aes_key_b);
+
+	std::vector < uint32_t> vs{0};
+	for (i = 0; i < CHALLENGE_NUM; i++) {
+		ctr_block = _mm_insert_epi32(ctr_block, vs[i]+1, 2);
+		tmp1 = _mm_shuffle_epi8(ctr_block, BSWAP_EPI64);
+		tmp1 = _mm_xor_si128(tmp1, ((__m128i*)aes_key_a.KEY)[0]);
+		for (j = 1; j < aes_key_a.nr; j++) {
+			tmp1 = _mm_aesenc_si128(tmp1, ((__m128i*)aes_key_a.KEY)[j]);
+		}
+		tmp1 = _mm_aesenclast_si128(tmp1, ((__m128i*)aes_key_a.KEY)[j]);
+		gfmul_(tmp1, *__128coeff, tmp2);
+		sum_a = _mm_xor_si128(sum_a, tmp2);
+
+		tmp3 = _mm_shuffle_epi8(ctr_block, BSWAP_EPI64);
+		tmp3 = _mm_xor_si128(tmp3, ((__m128i*)aes_key_b.KEY)[0]);
+		for (j = 1; j < aes_key_b.nr; j++) {
+			tmp3 = _mm_aesenc_si128(tmp3, ((__m128i*)aes_key_b.KEY)[j]);
+		}
+		tmp3 = _mm_aesenclast_si128(tmp3, ((__m128i*)aes_key_b.KEY)[j]);
+		gfmul_(tmp3, *__128coeff, tmp4);
+		sum_b = _mm_xor_si128(sum_b, tmp4);
+		++__128coeff;
+	}
+	gamma_a = _mm_xor_si128(sum_a, gamma_a);
+	gamma_b = _mm_xor_si128(sum_b, gamma_b);
+	__m128i bswap_mask = _mm_set_epi8(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+	__m128i a = *(__m128i*)s_a;
+	__m128i b = *(__m128i*)s_b;
+	a = _mm_shuffle_epi8(a, bswap_mask);
+	b = _mm_shuffle_epi8(b, bswap_mask);
+	gfmul_(gamma_a, b, tmp1);
+	gfmul_(gamma_b, a, tmp3);
+	int mask = _mm_movemask_epi8(_mm_cmpeq_epi32(tmp1, tmp3));
+	return mask == 0xFFFF;
 }
 
