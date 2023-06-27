@@ -14,7 +14,7 @@ class Client
 {
 public:
 	char name[20];
-	void KeyGen();
+	void keyGen();
 
 	Client(std::string name);
 

@@ -12,14 +12,14 @@ constexpr auto BUFFER_SIZE = 2048;
 constexpr auto KEY_SIZE = 16;
 // challenge length 460(688) leads to 99% (99.9%) a successful detection probability 
 // if 1% outsourced data is damaged.
-constexpr auto CHALLENGE_NUM = 1;
+constexpr auto CHALLENGE_NUM = 10;
 //constexpr auto CHALLENGE_NUM = 460;
 // constexpr auto CHALLENGE_NUM = 688;
 
 constexpr auto file_path = "E:\\home\\data\\1.txt";
 constexpr auto key_path = "E:\\home\\data\\key.txt";
-constexpr auto file_a = "E:\\home\\data\\encrypt_a.enc";
-constexpr auto file_b = "E:\\home\\data\\encrypt_b.enc";
+constexpr auto file_a = "E:\\home\\data\\encrypt_a.txt";
+constexpr auto file_b = "E:\\home\\data\\encrypt_b.txt";
 typedef unsigned long long block;
 
 extern uint8_t key_A[KEY_SIZE];
@@ -30,6 +30,7 @@ extern uint8_t key_digest_a[KEY_SIZE];
 extern uint8_t key_digest_b[KEY_SIZE];
 extern uint8_t CTR128_IV[8];
 extern uint8_t CTR128_NONCE[4];
+extern size_t maxIndex;
 
 typedef struct KEY_SCHEDULE {
     uint8_t KEY[16 * 15];

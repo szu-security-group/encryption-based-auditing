@@ -10,18 +10,9 @@
 #include "timer.h"
 #include "general.h"
 
+//size_t maxIndex = std::filesystem::file_size(file_a) % AES128_BLOCK_SIZE;
 
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="key_A">key for ServerA</param>
-/// <param name="key_B">key for ServerB</param>
-/// <param name="s_a">secrect a</param>
-/// <param name="s_b">secrect b</param>
-/// <param name="k_d_a">key to generate digest for ServerA</param>
-/// <param name="k_d_b">key to generate digest for ServerB</param>
-void Client::KeyGen()
+void Client::keyGen()
 {
 	std::ifstream infile(key_path);
 	if (!infile.good()) {
@@ -62,6 +53,7 @@ void Client::test_Decode_and_Encode()
 		}
 		std::string file_str = file_str_stream.str();
 		unsigned long long t_length = file_str.length();
+		maxIndex = t_length / AES128_BLOCK_SIZE;
 		uint8_t* CIPHERTEXT = (uint8_t*)malloc(t_length);
 		encode((uint8_t*)file_str.c_str(), CIPHERTEXT, t_length, key_A,s_a);
 		save_file(CIPHERTEXT, t_length, file_a);
@@ -172,8 +164,8 @@ bool Client::Verify(chall t_chall, uint8_t* digestA, uint8_t* digestB)
 	__m128i gamma_a = *(__m128i*)digestA;
 	__m128i gamma_b = *(__m128i*)digestB;
 
-	std::vector<uint32_t> indices{ 0 };
-	//indices = getRandomIndex(t_chall.index, max);
+	std::vector<uint32_t> indices;
+	indices = getRandomIndex(t_chall.index,maxIndex);
 	std::string str_coeff;
 	char buffer[AES128_BLOCK_SIZE];
 	str_coeff = getCoeff(t_chall.coeff);
@@ -194,9 +186,8 @@ bool Client::Verify(chall t_chall, uint8_t* digestA, uint8_t* digestB)
 	AES_KEY aes_key_b;
 	AES_set_encrypt_key(key_B, 128, &aes_key_b);
 
-	std::vector < uint32_t> vs{0};
 	for (i = 0; i < CHALLENGE_NUM; i++) {
-		ctr_block = _mm_insert_epi32(ctr_block, vs[i]+1, 2);
+		ctr_block = _mm_insert_epi32(ctr_block, indices[i]+1, 2);
 		tmp1 = _mm_shuffle_epi8(ctr_block, BSWAP_EPI64);
 		tmp1 = _mm_xor_si128(tmp1, ((__m128i*)aes_key_a.KEY)[0]);
 		for (j = 1; j < aes_key_a.nr; j++) {

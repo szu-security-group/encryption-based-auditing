@@ -22,6 +22,7 @@ uint8_t key_digest_a[KEY_SIZE]{};
 uint8_t key_digest_b[KEY_SIZE]{};
 uint8_t CTR128_IV[8] = { 0xC0,0x54,0x3B,0x59,0xDA,0x48,0xD9,0x0B };
 uint8_t CTR128_NONCE[4] = { 0x00,0x6C,0xB6,0xDB };
+size_t maxIndex = 0;
 
 
 
@@ -230,7 +231,7 @@ std::string getCoeff(const uint8_t* key) {
     uint8_t iv[CryptoPP::Salsa20::IV_LENGTH] = { 0x00 };
     CryptoPP::Salsa20::Encryption salsaEncryption;
     salsaEncryption.SetKeyWithIV(key, CryptoPP::Salsa20::DEFAULT_KEYLENGTH, iv);
-    std::string stringsource(CHALLENGE_NUM * sizeof(AES128_BLOCK_SIZE), 0x00);
+    std::string stringsource(CHALLENGE_NUM *AES128_BLOCK_SIZE, 0x00);
     std::string ciphertext;
     CryptoPP::StringSource(stringsource, true,
         new CryptoPP::StreamTransformationFilter(salsaEncryption,
@@ -249,7 +250,7 @@ std::vector<uint32_t> getRandomIndex(const uint8_t* key,uint32_t file_length) {
         new CryptoPP::StreamTransformationFilter(salsaEncryption,
             new CryptoPP::StringSink(ciphertext)));
     std::vector<uint32_t> nums;
-    uint32_t* num = (uint32_t*)stringsource.c_str();
+    uint32_t* num = (uint32_t*)ciphertext.c_str();
     for (int i = 0; i < CHALLENGE_NUM; i++) {
         nums.push_back(*num%file_length);
         num++;

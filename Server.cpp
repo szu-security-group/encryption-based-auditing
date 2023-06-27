@@ -9,9 +9,8 @@ Server::Server(std::string name) {
 void Server::response(chall t_chall,const std::string file_name, uint8_t*proof)
 {
     std::ifstream infile(file_name, std::ios::in | std::ios::binary);
-    uint32_t max = static_cast<uint32_t>(infile.tellg());
-    std::vector<uint32_t> indices{0};
-    //indices = getRandomIndex(t_chall.index, max);
+    std::vector<uint32_t> indices;
+    indices = getRandomIndex(t_chall.index, maxIndex);
     std::string str_coeff;
     char buffer[AES128_BLOCK_SIZE];
     str_coeff = getCoeff(t_chall.coeff);
@@ -23,6 +22,7 @@ void Server::response(chall t_chall,const std::string file_name, uint8_t*proof)
         infile.read(buffer, AES128_BLOCK_SIZE);
         __m128i tmp;
         gfmul_(*(__m128i*)buffer, *__128coeff, tmp);
+        ++__128coeff;
         sum = _mm_xor_si128(sum, tmp);
     }
     _mm_store_si128((__m128i*)proof, sum);

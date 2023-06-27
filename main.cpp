@@ -1,13 +1,11 @@
-#include "gfmul.h"
 #include "general.h"
 #include "Client.h"
 #include "Server.h"
 
 
-
 int main() {
 	Client client("user");
-	client.KeyGen();
+	client.keyGen();
 	client.test_Decode_and_Encode();
 	chall new_chall;
 	new_chall = client.challenge();
