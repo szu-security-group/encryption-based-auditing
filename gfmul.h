@@ -1,7 +1,4 @@
 #pragma once
-#ifndef GFMUL_H
-#define GFMUL_H
-
 
 #include <stdint.h>
 #include <wmmintrin.h>
@@ -19,6 +16,4 @@ void print_m128i_with_string(const char* string, __m128i data);
 void getInverseEle(__m128i a, __m128i& res);
 void test_gfmul();
 void test_Inverse();
-
-#endif // !GFMUL_H
 

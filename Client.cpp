@@ -4,8 +4,8 @@
 #include <string>
 #include <sstream>
 #include <filesystem>
-#include <crypto870/osrng.h>
-#include <crypto870/salsa.h>
+#include <crypto++/osrng.h>
+#include <crypto++/salsa.h>
 #include "gfmul.h"
 #include "timer.h"
 #include "general.h"
